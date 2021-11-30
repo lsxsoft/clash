@@ -35,10 +35,52 @@ external-controller: 127.0.0.1:9090
 
 
 proxy-providers:
-
+    TagList: #机场订阅随便起个名后面要引用
+      type: http
+      url: "https://subscribe.hlasw.com/link/gZTR5fbwF8gfI5dF?clash=2&extend=1" # 放机场订阅链接
+      interval: 3600
+      path: ./Proxy/tagList.yaml # 注意此处文件名不可相同
+      health-check:
+        enable: true
+        interval: 600
+        url: http://www.gstatic.com/generate_204
 
 proxy-groups:
-
+-
+  name: '🚀 节点选择'
+  type: select
+  proxies:
+    - '♻️ 自动选择'
+    - DIRECT
+  use:
+    - TagList
+    
+-
+  name: '♻️ 自动选择'
+  type: url-test
+  url: 'http://www.gstatic.com/generate_204'
+  interval: 3600
+  use:
+    - TagList
+-
+  name: '🎯 全球直连'
+  type: select
+  proxies:
+    - DIRECT
+    - '♻️ 自动选择'
+-
+  name: '🛑 全球拦截'
+  type: select
+  proxies:
+    - REJECT
+    - DIRECT
+-
+  name: '🐟 漏网之鱼'
+  type: select
+  proxies:
+    - '🚀 节点选择'
+    - '🎯 全球直连'
+    - '♻️ 自动选择'
 
 rule-providers:
 # name: # Provider 名称
@@ -48,7 +90,30 @@ rule-providers:
 #   url: # 只有当类型为 HTTP 时才可用，您不需要在本地空间中创建新文件。
 #   interval: # 自动更新间隔，仅在类型为 HTTP 时可用
 
+  DisneyPlus:
+    type: http
+    behavior: classical
+    path: ./RuleSet/DisneyPlus.yaml
+    url: https://raw.githubusercontent.com/DivineEngine/Profiles/master/Clash/RuleSet/StreamingMedia/Video/DisneyPlus.yaml
+    interval: 86400
 
 # 规则
 rules:
+  # DisneyPlus
+  - RULE-SET, DisneyPlus,🚀 节点选择
 
+  # Local Area Network
+  - IP-CIDR,192.168.0.0/16,DIRECT
+  - IP-CIDR,10.0.0.0/8,DIRECT
+  - IP-CIDR,172.16.0.0/12,DIRECT
+  - IP-CIDR,127.0.0.0/8,DIRECT
+  - IP-CIDR,100.64.0.0/10,DIRECT
+  - IP-CIDR,224.0.0.0/4,DIRECT
+  - IP-CIDR,fe80::/10,DIRECT
+  
+  # Tencent
+  - IP-CIDR,119.28.28.28/32,DIRECT
+  - IP-CIDR,182.254.116.0/24,DIRECT
+  # GeoIP China
+  - GEOIP,CN,DIRECT
+  - MATCH, 🚀 节点选择
